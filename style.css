@@ -1,4 +1,4 @@
-/* [CSS-01] BỐ CỤC CHUNG & THANH CUỘN MƯỢT */
+/* [CSS-01] BỐ CỤC CHUNG, CUỘN MƯỢT & CHẾ ĐỘ THU GỌN CỘT TRÁI TRÊN PC */
 * {
   box-sizing: border-box;
 }
@@ -23,7 +23,18 @@ body {
   background: #64748b;
 }
 
-/* [CSS-02] THẺ CHỌN VAI THAM MƯU */
+aside.sidebar-collapsed {
+  width: 0 !important;
+  padding: 0 !important;
+  border-right-width: 0 !important;
+  overflow: hidden !important;
+}
+
+/* [CSS-02] HIỆU ỨNG KÉO THẢ FILE TỪ ZALO PC & THẺ CHỌN VAI */
+.dropzone-active {
+  background-color: #faf5ff !important;
+  box-shadow: inset 0 0 0 2.5px #9333ea !important;
+}
 .role-card {
   border: 1.5px solid #cbd5e1;
   background: #ffffff;
@@ -37,40 +48,58 @@ body {
 .role-card.active {
   border-color: #1d4ed8;
   background: #eff6ff;
-  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.15);
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.14);
 }
 
-/* [CSS-03] TRANG GIẤY A4 CHUẨN NGHỊ ĐỊNH 30/2020/NĐ-CP */
+/* [CSS-03] BÀN LÀM VIỆC & TRANG GIẤY A4 CHUẨN NGHỊ ĐỊNH 30/2020/NĐ-CP */
 .a4-desk {
-  background-color: #cbd5e1;
-  padding: 24px 16px 48px 16px;
+  background: linear-gradient(180deg, #cbd5e1 0%, #bcc7d6 100%);
+  padding: 20px 16px 52px 16px;
+}
+.a4-zoom-stage {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-width: 0;
 }
 .a4-page {
+  --a4-scale: 1;
   width: 210mm;
   min-height: 297mm;
-  margin: 0 auto;
   background: #ffffff;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.22);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.24), 0 2px 6px rgba(15, 23, 42, 0.1);
   /* Lề chuẩn NĐ30: Trên 20mm, Phải 15mm, Dưới 20mm, Trái 30mm */
   padding: 20mm 15mm 20mm 30mm;
   font-family: 'Times New Roman', Times, serif;
   font-size: 14pt;
   line-height: 1.35;
   color: #000000;
+  transform: scale(var(--a4-scale));
+  transform-origin: top center;
+  transition: transform 0.15s ease;
+  position: relative;
 }
 .a4-page[data-fontsize="13.5pt"] {
   font-size: 13.5pt;
+}
+.a4-page[data-fontsize="13pt"] {
+  font-size: 13pt;
+}
+
+/* Vạch báo ngắt trang A4 trực quan mỗi 297mm (chỉ hiển thị trên màn hình, không in ra giấy) */
+.a4-page.show-page-guides {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(297mm - 1.5px),
+    rgba(59, 130, 246, 0.42) calc(297mm - 1.5px),
+    rgba(59, 130, 246, 0.42) 297mm
+  );
 }
 
 /* [CSS-04] ĐƯỜNG KẺ NGANG QUỐC HIỆU & CƠ QUAN BAN HÀNH */
 .nd30-line-org {
   width: 38%;
-  height: 1px;
-  background-color: #000000;
-  margin: 3px auto 0 auto;
-}
-.nd30-line-qh {
-  width: 68%;
   height: 1px;
   background-color: #000000;
   margin: 3px auto 0 auto;
@@ -82,15 +111,64 @@ body {
   margin: 5px auto 0 auto;
 }
 
-/* [CSS-05] VÙNG SOẠN THẢO TRỰC TIẾP TRÊN GIẤY */
+/* [CSS-05] VÙNG SOẠN THẢO TRỰC TIẾP, PLACEHOLDER MỜ & ĐỊNH DẠNG ĐOẠN VĂN */
+[contenteditable="true"] {
+  transition: background-color 0.12s ease;
+}
+[contenteditable="true"]:hover {
+  background-color: rgba(241, 245, 249, 0.65);
+  border-radius: 2px;
+}
 [contenteditable="true"]:focus {
   outline: 1.5px dashed #3b82f6;
   background-color: #fefce8;
   border-radius: 2px;
 }
-.a4-body p {
+[contenteditable="true"][data-placeholder]:empty:before {
+  content: attr(data-placeholder);
+  color: #94a3b8;
+  font-style: italic;
+  font-weight: normal;
+  pointer-events: none;
+}
+
+/* Dòng Kính gửi chuẩn NĐ30: chữ đứng, hỗ trợ 1 dòng hoặc nhiều dòng gạch đầu dòng */
+.a4-dear-box {
+  font-weight: normal;
+  white-space: pre-line;
+  line-height: 1.4;
+}
+.a4-dear-box.multi-line {
+  display: table;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+}
+
+/* Đồng bộ thụt lề đầu dòng 12.7mm cho cả <p> lẫn <div> khi gõ Enter */
+.a4-body p,
+.a4-body > div {
   margin: 0 0 6pt 0;
   text-indent: 12.7mm;
+  text-align: justify;
+}
+.a4-body h1,
+.a4-body h2,
+.a4-body h3,
+.a4-body h4 {
+  font-size: inherit;
+  font-weight: bold;
+  margin: 8pt 0 4pt 0;
+  text-indent: 12.7mm;
+  text-align: justify;
+}
+.a4-body ul,
+.a4-body ol {
+  margin: 0 0 6pt 0;
+  padding-left: 18mm;
+}
+.a4-body li {
+  margin-bottom: 4pt;
   text-align: justify;
 }
 
@@ -115,6 +193,7 @@ body {
   text-align: center;
   background-color: #f8fafc;
 }
+
 .chat-msg-user {
   background-color: #dbeafe;
   color: #1e3a8a;
@@ -125,4 +204,53 @@ body {
   color: #1e293b;
   border: 1px solid #e2e8f0;
   border-radius: 10px 10px 10px 2px;
+}
+
+/* [CSS-07] CHẾ ĐỘ IN TRỰC TIẾP / LƯU PDF BẰNG CTRL + P TRÊN PC */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 20mm 15mm 20mm 30mm;
+  }
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+  header,
+  #topWorkspaceBar,
+  aside,
+  #paperTopToolbar,
+  #selectionAiBar,
+  #modalProfile,
+  #modalApi,
+  #toastContainer {
+    display: none !important;
+  }
+  main, .a4-desk, .a4-zoom-stage {
+    display: block !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+  .a4-page {
+    width: 100% !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    background-image: none !important;
+  }
+  [contenteditable="true"][data-placeholder]:empty {
+    display: none !important;
+  }
+  .a4-body th {
+    background-color: transparent !important;
+  }
+  .nd30-footer-table {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
 }
