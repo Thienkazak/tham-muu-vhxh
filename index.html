@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trợ Lý Tham Mưu VH-XH - UBND Phường Phú Nhuận</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="h-screen flex flex-col overflow-hidden select-none">
+
+  <!-- [HTML-01] THANH TIÊU ĐỀ CÓ BẢNG NHẮC LẦN ĐẦU TO RÕ -->
+  <header class="bg-slate-900 text-white px-3.5 py-1.5 flex items-center justify-between gap-2 shadow z-30 shrink-0">
+    <div class="flex items-center gap-2.5 shrink-0">
+      <div class="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-sm font-bold">
+        <i class="fa-solid fa-feather-pointed"></i>
+      </div>
+      <div class="flex items-center gap-2">
+        <h1 class="font-bold text-xs sm:text-sm tracking-wide">TRỢ LÝ THAM MƯU VĂN BẢN</h1>
+        <span class="hidden md:inline-block text-[10px] bg-blue-800 text-blue-100 px-2 py-0.5 rounded font-medium">PHÒNG VH-XH • PHÚ NHUẬN</span>
+      </div>
+    </div>
+
+    <!-- Bảng nhắc to rõ khi lần đầu mở App chưa nhập Mã nội bộ / API Key -->
+    <div id="firstUseTipBanner" class="flex items-center gap-2 bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm px-3.5 py-1 rounded-lg shadow-md border border-amber-200">
+      <i class="fa-solid fa-triangle-exclamation text-rose-700"></i>
+      <span>Vui lòng nhập thông tin vào ô bên phải trước khi sử dụng!</span>
+      <i class="fa-solid fa-hand-point-right text-rose-700"></i>
+    </div>
+
+    <!-- Thanh trạng thái lưu bình thường (Hiện ra sau khi đã nhập Mã/Key) -->
+    <div id="normalSaveBar" class="hidden items-center gap-2 bg-slate-800 px-2.5 py-1 rounded-md border border-slate-700 text-[11px]">
+      <span id="saveStatusBadge" class="text-emerald-400 flex items-center gap-1 font-medium">
+        <i class="fa-solid fa-shield-halved"></i> Tự động lưu
+      </span>
+      <span class="text-slate-600">|</span>
+      <span id="diskStatusBadge" class="text-slate-300 flex items-center gap-1">
+        <i class="fa-solid fa-hard-drive text-sky-400"></i> Ổ cứng PC
+      </span>
+    </div>
+
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button id="btnOpenProfile" type="button" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
+        <i class="fa-solid fa-id-card text-amber-400"></i>
+        <span id="profileBtnLabel">Ghi chú máy</span>
+      </button>
+      <button id="btnOpenApiModal" type="button" class="bg-slate-800 hover:bg-slate-700 border border-amber-400/80 text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1.5 transition cursor-pointer">
+        <span id="apiStatusDot" class="w-2 h-2 rounded-full bg-rose-500 inline-block"></span>
+        <i class="fa-solid fa-key text-sky-400"></i>
+        <span id="apiBtnLabel">Nhập Mã / API Key</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="bg-slate-800 border-b border-slate-700 px-3 py-1 flex items-center justify-between gap-2 z-20 shrink-0">
+    <div class="flex items-center gap-1.5 flex-1 min-w-0">
+      <div id="workspaceTabsBar" class="flex items-center gap-1 overflow-x-auto max-w-full py-0.5"></div>
+      <button id="btnNewTab" type="button" class="shrink-0 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold px-2.5 py-1 rounded flex items-center gap-1 transition">
+        <i class="fa-solid fa-plus"></i> Soạn mới
+      </button>
+    </div>
+
+    <div class="flex items-center gap-1.5 shrink-0 text-[11px] relative">
+      <button id="btnSaveSnapshot" type="button" class="bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded flex items-center gap-1 border border-slate-600 transition">
+        <i class="fa-solid fa-camera-rotate"></i> <span>Lưu mốc</span>
+      </button>
+      <div class="relative">
+        <button id="btnToggleSnapshots" type="button" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded flex items-center gap-1 border border-slate-600 transition">
+          <i class="fa-solid fa-clock-rotate-left text-amber-400"></i>
+          <span id="snapshotCountLabel">Mốc lưu (0)</span>
+        </button>
+        <div id="snapshotDropdown" class="hidden absolute right-0 mt-1.5 w-72 bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200 p-2 z-50">
+          <div class="flex items-center justify-between px-2 py-1 border-b border-slate-100">
+            <span class="text-[11px] font-bold text-slate-700">Mốc hoàn tác (Tối đa 10)</span>
+            <button id="btnClearSnapshots" type="button" class="text-[10.5px] text-rose-600 hover:underline">Xóa hết</button>
+          </div>
+          <div id="snapshotListBox" class="max-h-60 overflow-y-auto divide-y divide-slate-100 mt-1"></div>
+        </div>
+      </div>
+      <button id="btnSaveTmvFile" type="button" class="bg-emerald-700 hover:bg-emerald-600 text-white px-2.5 py-1 rounded flex items-center gap-1 transition">
+        <i class="fa-solid fa-download"></i> Lưu .tmv
+      </button>
+      <button id="btnOpenTmvFile" type="button" class="bg-slate-700 hover:bg-slate-600 text-sky-300 px-2.5 py-1 rounded flex items-center gap-1 border border-slate-600 transition">
+        <i class="fa-solid fa-folder-open"></i> Mở .tmv
+      </button>
+      <input id="tmvFileInput" type="file" accept=".tmv,.json" class="hidden" />
+    </div>
+  </div>
+
+  <!-- [HTML-02] KHÔNG GIAN LÀM VIỆC 2 CỘT -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <aside class="w-[395px] shrink-0 bg-white border-r border-slate-300 h-full overflow-hidden flex flex-col p-2.5 gap-2">
+
+      <!-- Khối 1: Vai & Loại Văn Bản -->
+      <section class="bg-slate-50 border border-slate-200 rounded-lg p-2 shrink-0">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[11px] font-bold uppercase text-slate-700 flex items-center gap-1">
+            <i class="fa-solid fa-user-tie text-blue-600"></i> 1. Vai ký & Loại văn bản
+          </span>
+          <select id="docTypeSelect" class="text-xs font-bold bg-white border border-slate-300 rounded px-2 py-0.5 text-blue-800 focus:outline-none"></select>
+        </div>
+        <div id="roleButtonsContainer" class="grid grid-cols-2 gap-1.5 items-stretch"></div>
+      </section>
+
+      <!-- Khối 2: Tủ Hồ Sơ PC -->
+      <section class="bg-slate-50 border border-slate-200 rounded-lg p-2 shrink-0">
+        <div class="flex items-center justify-between">
+          <button id="btnToggleCabinetBody" type="button" class="text-[11px] font-bold uppercase text-slate-700 flex items-center gap-1 hover:text-blue-700">
+            <i id="cabinetChevronIcon" class="fa-solid fa-chevron-down text-[10px] text-slate-500"></i>
+            <i class="fa-solid fa-folder-tree text-amber-600"></i>
+            <span>2. Tủ hồ sơ PC</span>
+            <span id="cabinetCountBadge" class="text-[10.5px] font-semibold text-blue-700">(0)</span>
+          </button>
+          <div class="flex items-center gap-1">
+            <button id="btnPickFolder" type="button" class="bg-blue-600 hover:bg-blue-700 text-white text-[10.5px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+              <i class="fa-solid fa-folder-open"></i> Chọn
+            </button>
+            <button id="btnRefreshFolder" type="button" title="Làm mới tủ hồ sơ" class="bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10.5px] px-1.5 py-0.5 rounded">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+          </div>
+          <input id="folderFallbackInput" type="file" webkitdirectory multiple class="hidden" />
+        </div>
+
+        <div id="cabinetBodyWrap" class="mt-1.5">
+          <div class="flex items-center justify-between text-[10.5px] text-slate-500 mb-1">
+            <span id="cabinetSummaryBar" class="truncate max-w-[240px]">Chưa chọn thư mục</span>
+            <div class="space-x-1.5 shrink-0">
+              <button id="btnSelectAllFiles" type="button" class="text-blue-600 hover:underline">Tất cả</button>
+              <button id="btnClearAllFiles" type="button" class="text-slate-500 hover:underline">Bỏ</button>
+            </div>
+          </div>
+          <div id="cabinetFileList" class="max-h-24 overflow-y-auto space-y-1 pr-0.5"></div>
+        </div>
+      </section>
+
+      <!-- Khối 3: Tham Mưu AI -->
+      <section class="bg-slate-50 border border-slate-200 rounded-lg p-2 flex-1 min-h-0 flex flex-col">
+        <div class="flex items-center justify-between shrink-0 mb-1">
+          <span class="text-[11px] font-bold uppercase text-slate-700 flex items-center gap-1">
+            <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> 3. Tham mưu AI
+          </span>
+          <div class="flex items-center gap-1.5">
+            <button id="btnAutoFilterCabinet" type="button" class="text-[10.5px] text-purple-700 hover:underline font-semibold">
+              <i class="fa-solid fa-filter"></i> Lọc tủ
+            </button>
+            <button id="btnPickTaskFiles" type="button" class="bg-purple-600 hover:bg-purple-700 text-white text-[10.5px] font-semibold px-2 py-0.5 rounded flex items-center gap-1">
+              <i class="fa-solid fa-paperclip"></i> Đính kèm đề bài
+            </button>
+            <input id="taskFilesInput" type="file" multiple accept=".docx,.doc,.pdf,.xlsx,.xls,.csv,.txt,.md,.png,.jpg,.jpeg,.webp" class="hidden" />
+          </div>
+        </div>
+
+        <div id="taskFilesList" class="shrink-0 max-h-14 overflow-y-auto space-y-1 mb-1 empty:hidden"></div>
+        <div id="aiChatLog" class="flex-1 min-h-0 bg-white border border-slate-200 rounded-lg p-2 overflow-y-auto space-y-1.5 text-xs select-text"></div>
+
+        <div class="shrink-0 pt-1.5 space-y-1.5">
+        <!-- Lưới 4 ô đồng bộ chiều cao 40px và chia 2 dòng chữ đều nhau -->
+          <div class="grid grid-cols-4 gap-1.5 items-stretch">
+            <div class="h-10 bg-slate-200 border border-slate-300 text-slate-700 font-bold text-[10.5px] leading-tight rounded-md flex items-center justify-center text-center px-1">
+              Mẫu lệnh<br />cho AI
+            </div>
+            <button id="btnQuickDefault" type="button" data-quick="Hãy tham mưu soạn thảo đầy đủ văn bản từ tài liệu đề bài và hồ sơ đính kèm, đúng thể thức Nghị định 30." class="quick-prompt-btn h-10 bg-purple-100 border border-purple-400 text-purple-900 font-semibold text-[10.5px] leading-tight rounded-md flex items-center justify-center text-center px-1 transition">
+              Soạn từ<br />đề bài
+            </button>
+            <button type="button" data-quick="Rà soát chuốt lại văn phong hành chính công vụ trang trọng, chặt chẽ và súc tích hơn." class="quick-prompt-btn h-10 bg-white hover:bg-purple-50 border border-slate-300 text-slate-700 font-medium text-[10.5px] leading-tight rounded-md flex items-center justify-center text-center px-1 transition">
+              Chuốt<br />NĐ30
+            </button>
+            <button type="button" data-quick="Bổ sung phân công nhiệm vụ cụ thể theo nguyên tắc 5 rõ (rõ đầu mối, phối hợp, sản phẩm, thời hạn)." class="quick-prompt-btn h-10 bg-white hover:bg-purple-50 border border-slate-300 text-slate-700 font-medium text-[10.5px] leading-tight rounded-md flex items-center justify-center text-center px-1 transition">
+              Phân công<br />5 rõ
+            </button>
+          </div>  
+          <textarea id="aiPromptInput" rows="2" placeholder="Nhập yêu cầu tham mưu (Ctrl + Enter để gửi)..." class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:outline-none focus:border-purple-600 resize-none select-text"></textarea>
+
+          <div class="flex items-center justify-between gap-2">
+            <label class="flex items-center gap-1 text-[10.5px] text-slate-700 cursor-pointer">
+              <input id="chkDeltaMode" type="checkbox" class="rounded text-purple-600" />
+              <span>Sửa tiếp nháp (-85% API)</span>
+            </label>
+            <div class="flex items-center gap-1">
+              <button id="btnRunAi" type="button" class="bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-1.5 px-3 rounded-lg shadow flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-bolt"></i> Tham mưu A4
+              </button>
+              <button id="btnCancelAi" type="button" class="hidden bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs py-1.5 px-2.5 rounded-lg">
+                <i class="fa-solid fa-stop"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </aside>
+<!-- [HTML-03] CỘT PHẢI: TRANG GIẤY A4 -->
+    <main class="flex-1 flex flex-col overflow-hidden select-text">
+      <div class="bg-white border-b border-slate-300 px-4 py-1.5 flex items-center justify-between gap-2 text-xs shrink-0 flex-wrap">
+        <div class="flex items-center gap-2">
+          <span class="font-semibold text-slate-600">Vai:</span>
+          <span id="activeRoleBadge" class="bg-blue-100 text-blue-800 font-bold px-2.5 py-0.5 rounded"></span>
+          <button id="btnOpenSelectionAi" type="button" class="bg-purple-100 hover:bg-purple-200 text-purple-800 font-semibold px-2.5 py-0.5 rounded flex items-center gap-1 border border-purple-300 transition cursor-pointer">
+            <i class="fa-solid fa-highlighter"></i> AI sửa đoạn bôi đen
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-slate-600 font-medium">Cỡ chữ:</label>
+          <select id="fontSizeSelect" class="border border-slate-300 rounded px-2 py-0.5 bg-white">
+            <option value="14pt">14 pt</option>
+            <option value="13.5pt">13.5 pt</option>
+          </select>
+          <button id="btnExportDocxStub" type="button" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3 py-1 rounded-lg flex items-center gap-1.5 shadow-sm transition">
+            <i class="fa-solid fa-file-word"></i> Xuất Word (.docx)
+          </button>
+        </div>
+      </div>
+
+      <div id="selectionAiBar" class="hidden bg-purple-950 text-white px-4 py-1.5 text-xs items-center justify-between gap-2 shadow-md shrink-0 flex-wrap">
+        <div class="flex items-center gap-2 min-w-0 flex-1">
+          <i class="fa-solid fa-wand-sparkles text-amber-300"></i>
+          <span id="selectionPreviewTxt" class="truncate text-purple-200 italic max-w-xs"></span>
+          <input id="selectionCustomPrompt" type="text" placeholder="Nhập yêu cầu sửa đoạn đang bôi đen (Enter để chạy)..." class="flex-1 min-w-[200px] bg-purple-900 border border-purple-700 rounded px-2.5 py-1 text-white placeholder-purple-300 focus:outline-none" />
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button id="btnRunSelectionAi" type="button" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1 rounded">Sửa ngay</button>
+          <button id="btnCloseSelectionAi" type="button" class="bg-purple-800 hover:bg-purple-700 text-white px-2.5 py-1 rounded"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+
+      <div class="flex-1 overflow-y-auto a4-desk">
+        <div id="a4Paper" class="a4-page" spellcheck="false">
+          <table class="w-full border-collapse mb-4">
+            <tr class="align-top text-center">
+              <td class="w-[42%] pr-1 text-[12pt]">
+                <div id="a4OrgLine1" class="uppercase leading-snug"></div>
+                <div id="a4OrgLine2" class="uppercase font-bold leading-snug"></div>
+                <div class="nd30-line-org"></div>
+                <div id="a4DocNumber" contenteditable="true" class="mt-2.5 text-[13pt]"></div>
+                <div id="a4CvSubject" contenteditable="true" class="mt-1.5 text-[12pt] text-center leading-snug hidden px-1"></div>
+              </td>
+              <td class="w-[58%] pl-1">
+                <div class="font-bold uppercase leading-snug text-[12pt] whitespace-nowrap">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                <div class="inline-block font-bold leading-snug text-[13.5pt] border-b border-black pb-[2px] mt-0.5">Độc lập - Tự do - Hạnh phúc</div>
+                <div id="a4DateLine" contenteditable="true" class="italic mt-2.5 text-[13pt] text-center"></div>
+              </td>
+            </tr>
+          </table>
+
+          <div id="a4NamedHeader" class="text-center my-5">
+            <div id="a4DocTypeName" contenteditable="true" class="font-bold uppercase text-[14pt]"></div>
+            <div id="a4NamedSub" contenteditable="true" class="font-bold text-[13.5pt] leading-snug mt-0.5"></div>
+            <div class="nd30-line-title"></div>
+          </div>
+
+          <div id="a4DearLine" contenteditable="true" class="text-center font-bold my-4"></div>
+          <div id="a4BodyContent" contenteditable="true" class="a4-body min-h-[110mm]"><p><br /></p></div>
+
+          <table class="w-full border-collapse mt-6">
+            <tr class="align-top">
+              <td class="w-[45%] pr-2 text-[11pt] leading-snug">
+                <div class="font-bold italic underline">Nơi nhận:</div>
+                <div id="a4Recipients" contenteditable="true" class="whitespace-pre-line mt-0.5"></div>
+              </td>
+              <td class="w-[55%] text-center leading-snug">
+                <div id="a4SignerAuth" contenteditable="true" class="font-bold uppercase whitespace-pre-line"></div>
+                <div class="h-20"></div>
+                <div id="a4SignerName" contenteditable="true" class="font-bold"></div>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- [HTML-04] HỘP GHI CHÚ MÁY & ĐỊA BÀN (ĐÃ BỎ SẠCH CỤM KHAI BÁO TÊN KÝ) -->
+  <div id="modalProfile" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4 select-text">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div class="bg-slate-900 text-white px-5 py-3 flex items-center justify-between">
+        <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-id-card text-amber-400"></i> THIẾT LẬP BÀN LÀM VIỆC & ĐỊA BÀN</h3>
+        <button id="btnCloseProfile" type="button" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="p-4 space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="font-semibold text-slate-700 block mb-1">Nhãn máy / Biệt danh (tùy thích):</label>
+            <input id="inpStaffName" type="text" spellcheck="false" placeholder="VD: Bàn số 2, Út Lan... (không vào VB)" class="w-full border border-slate-300 rounded-lg px-3 py-1.5" />
+          </div>
+          <div>
+            <label class="font-semibold text-slate-700 block mb-1">Mảng chuyên môn phụ trách:</label>
+            <input id="inpStaffField" type="text" spellcheck="false" placeholder="VD: Văn hóa - Thông tin, Bảo trợ..." class="w-full border border-slate-300 rounded-lg px-3 py-1.5" />
+          </div>
+        </div>
+        <div class="pt-2 border-t border-slate-200">
+          <div class="flex items-center justify-between mb-1">
+            <label class="font-semibold text-slate-700">Thông tin địa bàn Phường & Số liệu mảng phụ trách (AI ghi nhớ):</label>
+            <button id="btnResetLocalFacts" type="button" class="text-[11px] text-blue-600 hover:underline">Khôi phục 24 KP</button>
+          </div>
+          <textarea id="inpLocalFacts" rows="5" spellcheck="false" class="w-full border border-slate-300 rounded-lg p-2 text-[11.5px] leading-relaxed"></textarea>
+        </div>
+      </div>
+      <div class="bg-slate-100 px-5 py-2.5 flex justify-end">
+        <button id="btnSaveProfile" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2 rounded-lg"><i class="fa-solid fa-floppy-disk mr-1"></i> Lưu Thiết Lập</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- [HTML-05] HỘP CÀI ĐẶT KÉP: MÃ NỘI BỘ (MẶC ĐỊNH) HOẶC API KEY RIÊNG -->
+  <div id="modalApi" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-4 select-text">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+      <div class="bg-slate-900 text-white px-5 py-3 flex items-center justify-between">
+        <h3 class="font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-key text-sky-400"></i> KÍCH HOẠT KẾT NỐI AI</h3>
+        <button id="btnCloseApi" type="button" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="p-4 space-y-3 text-xs max-h-[80vh] overflow-y-auto">
+        <!-- Chế độ 1: Mã nội bộ dùng ngay -->
+        <div class="bg-amber-50 border border-amber-300 rounded-xl p-3 space-y-1.5">
+          <div class="font-bold text-amber-950 flex items-center gap-1.5">
+            <i class="fa-solid fa-users-gear text-amber-600"></i> Cách 1: Nhập Mã Nội Bộ Phòng (Dùng ngay Model Free cơ bản)
+          </div>
+          <input id="inpInternalPin" type="password" placeholder="Nhập Mã nội bộ của Phòng..." class="w-full bg-white border border-amber-300 rounded-lg px-3 py-1.5 font-mono" />
+        </div>
+
+        <!-- Chế độ 2: API Key riêng mở Model xịn -->
+        <div class="bg-sky-50 border border-sky-300 rounded-xl p-3 space-y-2">
+          <div class="font-bold text-sky-950 flex items-center gap-1.5">
+            <i class="fa-solid fa-rocket text-sky-600"></i> Cách 2 (Khuyên dùng): Dán Gemini API Key Cá Nhân để mở Model xịn nhất
+          </div>
+          <p class="text-[11px] text-sky-900 leading-relaxed">
+            Tự lấy Key miễn phí 30 giây tại <b>aistudio.google.com/apikey</b> (Bấm <b>Create API key</b> rồi copy dán vào dưới). Có Key riêng sẽ chạy tốc độ cao độc lập và mở khóa dòng <b>Gemini 3.5 Flash</b> + đọc ảnh PDF Scan dấu đỏ!
+          </p>
+          <div class="flex gap-1.5">
+            <input id="inpApiKey" type="password" placeholder="Dán mã AIzaSy... của riêng bạn (nếu có)" class="flex-1 bg-white border border-sky-300 rounded-lg px-3 py-1.5 font-mono" />
+            <button id="btnToggleKeyVis" type="button" class="bg-white border border-sky-300 px-3 rounded-lg hover:bg-slate-100"><i class="fa-solid fa-eye"></i></button>
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="font-semibold text-slate-700">Model cho Key cá nhân:</label>
+              <button id="btnDetectModels" type="button" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+                <i class="fa-solid fa-satellite-dish"></i> Cập nhật danh sách Model
+              </button>
+            </div>
+            <select id="selModelPrimary" class="w-full border border-slate-300 rounded-lg px-3 py-1.5 bg-white font-medium"></select>
+          </div>
+        </div>
+
+        <div id="apiTestResultBox" class="hidden rounded-lg p-2.5 border text-xs leading-relaxed"></div>
+      </div>
+      <div class="bg-slate-100 px-5 py-2.5 flex items-center justify-between">
+        <button id="btnTestApi" type="button" class="bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs px-3.5 py-2 rounded-lg"><i class="fa-solid fa-bolt mr-1"></i> Kiểm tra kết nối</button>
+        <button id="btnSaveApi" type="button" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs px-4 py-2 rounded-lg"><i class="fa-solid fa-check mr-1"></i> Lưu & Sử dụng</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+  <script src="config.js"></script>
+  <script src="storage.js"></script>
+  <script src="ai-docx.js"></script>
+</body>
+</html>
